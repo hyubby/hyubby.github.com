@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>음폐수 MEC 수소 물질수지</title>
+  <style>
+    :root{--background:#f7f9fc;--foreground:#172033;--card:#fff;--card-foreground:#172033;--muted:#e8edf5;--muted-foreground:#627087;--border:#d7deea;--viz-series-1:#1877c9}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--background);color:var(--foreground);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
+    main{max-width:1100px;margin:0 auto;padding:32px 20px 48px}
+    h1{font-size:clamp(1.5rem,3vw,2.15rem);margin:0 0 6px}
+    .subtitle{color:var(--muted-foreground);margin:0 0 24px}
+    .viz-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .card{background:var(--card);color:var(--card-foreground);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .viz-stat-value{font-size:1.55rem;font-weight:500;margin:4px 0}
+    .text-small{font-size:.82rem}.text-muted{color:var(--muted-foreground)}
+    .form-label{display:block;font-size:.92rem}
+    .form-range{width:100%;accent-color:var(--viz-series-1)}
+    strong{font-weight:500}
+    @media(max-width:650px){main{padding:24px 14px 40px}.viz-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>음폐수 MEC 수소 물질수지</h1>
+  <p class="subtitle">음폐수 10톤/일 · 3상분리기 → 산발효 → 세라믹 멤브레인 → MEC → 수소 정제</p>
+<div id="mecBalance">
+  <style>
+    #mecBalance{color:var(--foreground)}
+    #mecBalance .kpis{margin-bottom:18px}
+    #mecBalance .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;margin-bottom:22px}
+    #mecBalance .head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:5px}
+    #mecBalance .val{font-weight:500;white-space:nowrap}
+    #mecBalance .lane{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));align-items:center;gap:8px;margin:10px 0 20px}
+    #mecBalance .stage{grid-column:span 1;min-width:0;text-align:center}
+    #mecBalance .stage-name{font-weight:500;margin-bottom:7px;min-height:40px;display:flex;align-items:end;justify-content:center}
+    #mecBalance .stage-main{padding:12px 6px;background:color-mix(in srgb,var(--viz-series-1) 10%,transparent)}
+    #mecBalance .stage-num{font-weight:500;margin-bottom:3px}
+    #mecBalance .arrow{color:var(--muted-foreground);text-align:center}
+    #mecBalance .losses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 20px}
+    #mecBalance .loss{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+    #mecBalance .balance-chart{display:grid;gap:10px;margin-top:10px}
+    #mecBalance .barrow{display:grid;grid-template-columns:100px minmax(0,1fr) 110px;gap:10px;align-items:center}
+    #mecBalance .track{height:18px;background:var(--muted);border-radius:999px;overflow:hidden}
+    #mecBalance .fill{height:100%;background:var(--viz-series-1);border-radius:999px;transition:width .25s ease}
+    #mecBalance .barval{text-align:right;white-space:nowrap;font-weight:500}
+    #mecBalance .legend{margin-top:10px}
+    @media(max-width:650px){
+      #mecBalance .controls{grid-template-columns:1fr}
+      #mecBalance .lane{grid-template-columns:1fr}
+      #mecBalance .stage,#mecBalance .arrow{grid-column:auto}
+      #mecBalance .stage-name{min-height:0;align-items:center}
+      #mecBalance .arrow{transform:rotate(90deg)}
+      #mecBalance .losses{grid-template-columns:1fr}
+      #mecBalance .barrow{grid-template-columns:80px minmax(0,1fr)}
+      #mecBalance .barval{grid-column:2;text-align:left}
+    }
+    @media(prefers-reduced-motion:reduce){#mecBalance .fill{transition:none}}
+  </style>
+
+  <section class="viz-grid kpis" aria-label="?듭떖 寃곌낵">
+    <div class="card viz-stat"><div class="text-muted">?뚰룓???ъ엯</div><div class="viz-stat-value">10.0 t/??/div><div class="text-small text-muted" id="feedCodKpi">COD 1,000 kg/??/div></div>
+    <div class="card viz-stat"><div class="text-muted">MEC ?먯닔??/div><div class="viz-stat-value" id="rawKpi">52.0 kg/??/div><div class="text-small text-muted" id="rawNm3Kpi">578.6 Nm쨀/??/div></div>
+    <div class="card viz-stat"><div class="text-muted">?뺤젣 ?섏냼</div><div class="viz-stat-value" id="pureKpi">46.8 kg/??/div><div class="text-small text-muted" id="annualKpi">??17.1 t</div></div>
+  </section>
+
+  <section class="controls" aria-label="怨꾩궛 ?낅젰媛?>
+    <label class="form-label"><span class="head"><span>?먯닔 COD ?띾룄</span><output class="val" id="codOut">100 kg/m쨀</output></span><input class="form-range" id="cod" type="range" min="20" max="200" step="5" value="100"></label>
+    <label class="form-label"><span class="head"><span>3?곷텇由??≪긽 ?뚯닔??/span><output class="val" id="sepFlowOut">92%</output></span><input class="form-range" id="sepFlow" type="range" min="60" max="100" step="1" value="92"></label>
+    <label class="form-label"><span class="head"><span>3?곷텇由?COD ?뚯닔??/span><output class="val" id="sepCodOut">85%</output></span><input class="form-range" id="sepCod" type="range" min="50" max="100" step="1" value="85"></label>
+    <label class="form-label"><span class="head"><span>?곕컻??COD 蹂댁〈??/span><output class="val" id="acidOut">95%</output></span><input class="form-range" id="acid" type="range" min="70" max="100" step="1" value="95"></label>
+    <label class="form-label"><span class="head"><span>硫ㅻ툕?덉씤 ?ш낵???뚯닔??/span><output class="val" id="memFlowOut">85%</output></span><input class="form-range" id="memFlow" type="range" min="50" max="98" step="1" value="85"></label>
+    <label class="form-label"><span class="head"><span>硫ㅻ툕?덉씤 COD ?ш낵??/span><output class="val" id="memCodOut">90%</output></span><input class="form-range" id="memCod" type="range" min="40" max="100" step="1" value="90"></label>
+    <label class="form-label"><span class="head"><span>MEC COD ?쒓굅??/span><output class="val" id="mecRemovalOut">80%</output></span><input class="form-range" id="mecRemoval" type="range" min="20" max="98" step="1" value="80"></label>
+    <label class="form-label"><span class="head"><span>MEC ?섏냼?섏쑉 / ?대줎媛?/span><output class="val" id="h2YieldOut">65%</output></span><input class="form-range" id="h2Yield" type="range" min="10" max="100" step="1" value="65"></label>
+    <label class="form-label"><span class="head"><span>?뺤젣 ?섏냼 ?뚯닔??/span><output class="val" id="purRecoveryOut">90%</output></span><input class="form-range" id="purRecovery" type="range" min="50" max="100" step="1" value="90"></label>
+    <label class="form-label"><span class="head"><span>?쒗뭹 ?섏냼 ?쒕룄</span><output class="val" id="purityOut">99.9%</output></span><input class="form-range" id="purity" type="range" min="90" max="99.99" step="0.01" value="99.9"></label>
+  </section>
+
+  <section class="lane" aria-label="?④퀎蹂?臾쇱쭏?섏? ?먮쫫">
+    <div class="stage"><div class="stage-name">?뚰룓??/div><div class="stage-main"><div class="stage-num">10.00 m쨀/??/div><div class="text-small" id="s0cod">COD 1,000 kg/??/div></div></div>
+    <div class="arrow" aria-hidden="true">??/div>
+    <div class="stage"><div class="stage-name">3?곷텇由ш린</div><div class="stage-main"><div class="stage-num" id="s1flow">9.20 m쨀/??/div><div class="text-small" id="s1cod">COD 850 kg/??/div></div></div>
+    <div class="arrow" aria-hidden="true">??/div>
+    <div class="stage"><div class="stage-name">?곕컻??/div><div class="stage-main"><div class="stage-num" id="s2flow">9.20 m쨀/??/div><div class="text-small" id="s2cod">COD 808 kg/??/div></div></div>
+    <div class="arrow" aria-hidden="true">??/div>
+    <div class="stage"><div class="stage-name">?몃씪誘?硫ㅻ툕?덉씤</div><div class="stage-main"><div class="stage-num" id="s3flow">7.82 m쨀/??/div><div class="text-small" id="s3cod">COD 727 kg/??/div></div></div>
+    <div class="arrow" aria-hidden="true">??/div>
+    <div class="stage"><div class="stage-name">MEC ???뺤젣</div><div class="stage-main"><div class="stage-num" id="s4h2">46.8 kg-H????/div><div class="text-small" id="s4gas">?쒗뭹媛??521 Nm쨀/??/div></div></div>
+  </section>
+
+  <section class="losses" aria-label="遺꾨━ 諛?諛섏쓳 ?먯떎">
+    <div><div class="text-small text-muted">3?곷텇由?諛곗텧</div><div class="loss"><span>?≪긽 ??諛곗텧</span><strong id="sepFlowLoss">0.80 m쨀/??/strong></div><div class="loss"><span>COD 遺꾨━</span><strong id="sepCodLoss">150 kg/??/strong></div></div>
+    <div><div class="text-small text-muted">?곕컻??쨌 硫ㅻ툕?덉씤</div><div class="loss"><span>?곕컻??COD 媛먯냼</span><strong id="acidLoss">43 kg/??/strong></div><div class="loss"><span>?띿텞??/span><strong id="memFlowLoss">1.38 m쨀/??/strong></div><div class="loss"><span>COD 鍮꾪닾怨?/span><strong id="memCodLoss">81 kg/??/strong></div></div>
+    <div><div class="text-small text-muted">MEC 쨌 ?뺤젣</div><div class="loss"><span>MEC ?붾쪟 COD</span><strong id="mecResidual">145 kg/??/strong></div><div class="loss"><span>?뺤젣 H???먯떎</span><strong id="purLoss">5.2 kg/??/strong></div><div class="loss"><span>?쒗뭹媛??遺덉닚臾?/span><strong id="impurity">0.5 Nm쨀/??/strong></div></div>
+  </section>
+
+  <section aria-label="COD 臾쇱쭏?섏? 李⑦듃">
+    <div class="text-small text-muted">?④퀎蹂?COD 遺??/div>
+    <div class="balance-chart" role="img" aria-label="怨듭젙 ?④퀎蹂?COD 遺??鍮꾧탳">
+      <div class="barrow"><span>?먯닔</span><div class="track"><div class="fill" id="b0"></div></div><span class="barval" id="bv0">1,000 kg/??/span></div>
+      <div class="barrow"><span>3?곷텇由???/span><div class="track"><div class="fill" id="b1"></div></div><span class="barval" id="bv1">850 kg/??/span></div>
+      <div class="barrow"><span>?곕컻????/span><div class="track"><div class="fill" id="b2"></div></div><span class="barval" id="bv2">808 kg/??/span></div>
+      <div class="barrow"><span>MEC ?좎엯</span><div class="track"><div class="fill" id="b3"></div></div><span class="barval" id="bv3">727 kg/??/span></div>
+      <div class="barrow"><span>MEC ?좎텧</span><div class="track"><div class="fill" id="b4"></div></div><span class="barval" id="bv4">145 kg/??/span></div>
+    </div>
+    <div class="text-small text-muted legend" id="conversionLine">MEC COD ?꾪솚 581 kg/?????먯닔??52.0 kg/?????뺤젣?섏냼 46.8 kg/??/div>
+  </section>
+
+  <script>
+    (()=>{
+      const root=document.getElementById('mecBalance');
+      const $=id=>root.querySelector('#'+id);
+      const ids=['cod','sepFlow','sepCod','acid','memFlow','memCod','mecRemoval','h2Yield','purRecovery','purity'];
+      const fmt=(n,d=0)=>n.toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+      function update(){
+        const feedFlow=10;
+        const codConc=+$('cod').value;
+        const feedCod=feedFlow*codConc;
+        const sepFlowR=+$('sepFlow').value/100,sepCodR=+$('sepCod').value/100;
+        const acidR=+$('acid').value/100,memFlowR=+$('memFlow').value/100,memCodR=+$('memCod').value/100;
+        const mecR=+$('mecRemoval').value/100,yieldR=+$('h2Yield').value/100,purR=+$('purRecovery').value/100,purity=+$('purity').value/100;
+        const f1=feedFlow*sepFlowR,c1=feedCod*sepCodR;
+        const f2=f1,c2=c1*acidR;
+        const f3=f2*memFlowR,c3=c2*memCodR;
+        const codRemoved=c3*mecR,c4=c3-codRemoved;
+        const rawH2=codRemoved*0.125*yieldR;
+        const pureH2=rawH2*purR;
+        const rawNm3=rawH2*11.126;
+        const pureNm3=pureH2*11.126;
+        const productGas=pureNm3/purity;
+        const impurity=productGas-pureNm3;
+        const annual=pureH2*365/1000;
+        const labels={codOut:fmt(codConc)+' kg/m쨀',sepFlowOut:fmt(sepFlowR*100)+'%',sepCodOut:fmt(sepCodR*100)+'%',acidOut:fmt(acidR*100)+'%',memFlowOut:fmt(memFlowR*100)+'%',memCodOut:fmt(memCodR*100)+'%',mecRemovalOut:fmt(mecR*100)+'%',h2YieldOut:fmt(yieldR*100)+'%',purRecoveryOut:fmt(purR*100)+'%',purityOut:fmt(purity*100,2)+'%'};
+        Object.entries(labels).forEach(([id,v])=>$(id).textContent=v);
+        $('feedCodKpi').textContent='COD '+fmt(feedCod)+' kg/??;
+        $('rawKpi').textContent=fmt(rawH2,1)+' kg/??;
+        $('rawNm3Kpi').textContent=fmt(rawNm3,1)+' Nm쨀/??;
+        $('pureKpi').textContent=fmt(pureH2,1)+' kg/??;
+        $('annualKpi').textContent='??'+fmt(annual,1)+' t';
+        $('s0cod').textContent='COD '+fmt(feedCod)+' kg/??;
+        $('s1flow').textContent=fmt(f1,2)+' m쨀/??; $('s1cod').textContent='COD '+fmt(c1)+' kg/??;
+        $('s2flow').textContent=fmt(f2,2)+' m쨀/??; $('s2cod').textContent='COD '+fmt(c2)+' kg/??;
+        $('s3flow').textContent=fmt(f3,2)+' m쨀/??; $('s3cod').textContent='COD '+fmt(c3)+' kg/??;
+        $('s4h2').textContent=fmt(pureH2,1)+' kg-H????; $('s4gas').textContent='?쒗뭹媛??'+fmt(productGas,1)+' Nm쨀/??;
+        $('sepFlowLoss').textContent=fmt(feedFlow-f1,2)+' m쨀/??; $('sepCodLoss').textContent=fmt(feedCod-c1)+' kg/??;
+        $('acidLoss').textContent=fmt(c1-c2)+' kg/??; $('memFlowLoss').textContent=fmt(f2-f3,2)+' m쨀/??; $('memCodLoss').textContent=fmt(c2-c3)+' kg/??;
+        $('mecResidual').textContent=fmt(c4)+' kg/??; $('purLoss').textContent=fmt(rawH2-pureH2,1)+' kg/??; $('impurity').textContent=fmt(impurity,1)+' Nm쨀/??;
+        const vals=[feedCod,c1,c2,c3,c4];
+        vals.forEach((v,i)=>{$('b'+i).style.width=Math.max(1,v/feedCod*100)+'%';$('bv'+i).textContent=fmt(v)+' kg/??});
+        $('conversionLine').textContent='MEC COD ?꾪솚 '+fmt(codRemoved)+' kg/?????먯닔??'+fmt(rawH2,1)+' kg/?????뺤젣?섏냼 '+fmt(pureH2,1)+' kg/??;
+      }
+      ids.forEach(id=>$(id).addEventListener('input',update));
+      update();
+    })();
+  </script>
+</div>
+
+
+</main>
+</body>
+</html>
